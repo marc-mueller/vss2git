@@ -71,32 +71,37 @@ namespace Hpdi.Vss2Git
                 var db = df.Open();
 
                 var path = vssProjectTextBox.Text;
-                VssItem item;
-                try
-                {
-                    item = db.GetItem(path);
-                }
-                catch (VssPathException ex)
-                {
-                    MessageBox.Show(ex.Message, "Invalid project path",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                var project = item as VssProject;
-                if (project == null)
-                {
-                    MessageBox.Show(path + " is not a project", "Invalid project path",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
                 revisionAnalyzer = new RevisionAnalyzer(workQueue, logger, db);
-                if (!string.IsNullOrEmpty(excludeTextBox.Text))
+
+                foreach (var itemPath in path.Split(';'))
                 {
-                    revisionAnalyzer.ExcludeFiles = excludeTextBox.Text;
+                    VssItem item;
+                    try
+                    {
+                        item = db.GetItem(itemPath);
+                    }
+                    catch (VssPathException ex)
+                    {
+                        MessageBox.Show(ex.Message, "Invalid project path",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    var project = item as VssProject;
+                    if (project == null)
+                    {
+                        MessageBox.Show(itemPath + " is not a project", "Invalid project path",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    
+                    if (!string.IsNullOrEmpty(excludeTextBox.Text))
+                    {
+                        revisionAnalyzer.ExcludeFiles = excludeTextBox.Text;
+                    }
+                    revisionAnalyzer.AddItem(project);
                 }
-                revisionAnalyzer.AddItem(project);
 
                 changesetBuilder = new ChangesetBuilder(workQueue, logger, revisionAnalyzer);
                 changesetBuilder.AnyCommentThreshold = TimeSpan.FromSeconds((double)anyCommentUpDown.Value);
