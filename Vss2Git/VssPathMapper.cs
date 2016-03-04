@@ -626,9 +626,9 @@ namespace Hpdi.Vss2Git
             return null;
         }
 
-        public static string GetWorkingPath(string workingRoot, string vssPath)
+        public static string GetWorkingPath(string workingRoot, string vssPath, int projectsCount)
         {
-            if (vssPath == "$")
+            if (vssPath == "$" || projectsCount == 1)
             {
                 return workingRoot;
             }

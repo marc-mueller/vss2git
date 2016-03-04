@@ -23,6 +23,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using Hpdi.VssLogicalLib;
+using System.Linq;
 
 namespace Hpdi.Vss2Git
 {
@@ -119,7 +120,7 @@ namespace Hpdi.Vss2Git
                 // create mappings for root projects
                 foreach (var rootProject in revisionAnalyzer.RootProjects)
                 {
-                    var rootPath = VssPathMapper.GetWorkingPath(repoPath, rootProject.Path);
+                    var rootPath = VssPathMapper.GetWorkingPath(repoPath, rootProject.Path, revisionAnalyzer.RootProjects.Count());
                     pathMapper.SetProjectPath(rootProject.PhysicalName, rootPath, rootProject.Path);
                 }
 
