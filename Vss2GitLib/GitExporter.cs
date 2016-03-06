@@ -21,7 +21,6 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Windows.Forms;
 using Hpdi.VssLogicalLib;
 using System.Linq;
 
@@ -91,11 +90,11 @@ namespace Hpdi.Vss2Git
 
                 while (!git.FindExecutable())
                 {
-                    var button = MessageBox.Show("Git not found in PATH. " +
+                    var button = UserFeedbackService.Current.Show("Git not found in PATH. " +
                         "If you need to modify your PATH variable, please " +
                         "restart the program for the changes to take effect.",
-                        "Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
-                    if (button == DialogResult.Cancel)
+                        "Error", FeedbackOptions.RetryCancel, FeedbackIcon.Error);
+                    if (button == FeedbackResult.Cancel)
                     {
                         workQueue.Abort();
                         return;
@@ -576,15 +575,15 @@ namespace Hpdi.Vss2Git
 
         private bool RetryCancel(ThreadStart work)
         {
-            return AbortRetryIgnore(work, MessageBoxButtons.RetryCancel);
+            return AbortRetryIgnore(work, FeedbackOptions.RetryCancel);
         }
 
         private bool AbortRetryIgnore(ThreadStart work)
         {
-            return AbortRetryIgnore(work, MessageBoxButtons.AbortRetryIgnore);
+            return AbortRetryIgnore(work, FeedbackOptions.AbortRetryIgnore);
         }
 
-        private bool AbortRetryIgnore(ThreadStart work, MessageBoxButtons buttons)
+        private bool AbortRetryIgnore(ThreadStart work, FeedbackOptions buttons)
         {
             bool retry;
             do
@@ -600,13 +599,13 @@ namespace Hpdi.Vss2Git
 
                     message += "\nSee log file for more information.";
 
-                    var button = MessageBox.Show(message, "Error", buttons, MessageBoxIcon.Error);
+                    var button = UserFeedbackService.Current.Show(message, "Error", buttons, FeedbackIcon.Error);
                     switch (button)
                     {
-                        case DialogResult.Retry:
+                        case FeedbackResult.Retry:
                             retry = true;
                             break;
-                        case DialogResult.Ignore:
+                        case FeedbackResult.Ignore:
                             retry = false;
                             break;
                         default:

@@ -14,7 +14,6 @@
  */
 
 using System;
-using System.Windows.Forms;
 
 namespace Hpdi.Vss2Git
 {
@@ -54,8 +53,8 @@ namespace Hpdi.Vss2Git
 
         protected void ReportError(string message)
         {
-            var button = MessageBox.Show(message, "Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
-            if (button == DialogResult.Cancel)
+            var button = UserFeedbackService.Current.Show(message, "Error", FeedbackOptions.OKCancel, FeedbackIcon.Error);
+            if (button == FeedbackResult.Cancel)
             {
                 workQueue.Abort();
             }

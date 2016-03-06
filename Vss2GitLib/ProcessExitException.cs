@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-using System;
 
 namespace Hpdi.Vss2Git
 {
