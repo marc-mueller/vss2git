@@ -85,25 +85,46 @@ namespace Vss2Git
 
             var t1 = Task.Run(() =>
             {
-                service.StartMigration();
-                while (service.IsRunning)
+                try {
+                    service.StartMigration();
+                    while (service.IsRunning)
+                    {
+                        Thread.Sleep(1000); // todo implement correct async
+                    }
+                }
+                catch(Exception ex)
                 {
-                    Thread.Sleep(1000); // todo implement correct async
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(ex.Message);
+                    Console.ResetColor();
                 }
             });
             var t2 = Task.Run(() =>
             {
-                Thread.Sleep(1000);
-                while (service.IsRunning)
+                try {
+                    Thread.Sleep(1000);
+                    while (service.IsRunning)
+                    {
+                        ShowStatus(service);
+                        Thread.Sleep(100);
+                    }
+                }
+                catch(Exception ex)
                 {
-                    ShowStatus(service);
-                    Thread.Sleep(100);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(ex.Message);
+                    Console.ResetColor();
                 }
             });
             Task.WaitAll(new Task[] { t1, t2 });
 
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("VSS to Git Mîgration finished:");
             ShowStatus(service);
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.WriteLine("Press <ENTER> to quit...");
+            Console.ReadLine();
         }
 
         private static void ShowStatus(Vss2GitService service)
@@ -115,9 +136,11 @@ namespace Vss2Git
             Console.CursorLeft = left;
             if (!string.IsNullOrWhiteSpace(exceptions))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine();
                 Console.WriteLine(exceptions);
                 Console.WriteLine();
+                Console.ResetColor();
             }
         }
 
