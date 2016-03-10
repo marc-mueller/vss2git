@@ -137,7 +137,7 @@ namespace Vss2Git
             string status, time, files, revisions, changesets, exceptions = string.Empty;
             service.GetCurrentState(out status, out time, out files, out revisions, out changesets, out exceptions);
             int left = Console.CursorLeft;
-            Console.Write($"{status}, {time}, {files}, {revisions}, {changesets}");
+            Console.Write($"{status}, {time}, {files}, {revisions}, {changesets} ");
             Console.CursorLeft = left;
             if (!string.IsNullOrWhiteSpace(exceptions))
             {
