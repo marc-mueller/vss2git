@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncLineReader.cs" />
+    <Compile Include="AuthorInformation.cs" />
     <Compile Include="CollectionUtil.cs" />
     <Compile Include="ChangesetBuilder.cs" />
     <Compile Include="UserFeedbackService.cs" />

@@ -32,7 +32,7 @@ namespace Hpdi.Vss2Git
     /// <author>Trevor Robinson</author>
     class GitExporter : Worker
     {
-        private const string DefaultComment = "";
+        private const string DefaultComment = "Vss2Git Migration [original comment was empty]";
 
         private readonly VssDatabase database;
         private readonly RevisionAnalyzer revisionAnalyzer;
@@ -40,11 +40,13 @@ namespace Hpdi.Vss2Git
         private readonly StreamCopier streamCopier = new StreamCopier();
         private readonly HashSet<string> tagsUsed = new HashSet<string>();
 
-        private string emailDomain = "localhost";
-        public string EmailDomain
+        private Dictionary<string, AuthorInformation> usermapping;
+
+        private string usermappingfilepath;
+        public string UserMappingFilePath
         {
-            get { return emailDomain; }
-            set { emailDomain = value; }
+            get { return usermappingfilepath; }
+            set { usermappingfilepath = value; }
         }
 
         private Encoding commitEncoding = Encoding.UTF8;
@@ -207,7 +209,9 @@ namespace Hpdi.Vss2Git
                                 if (AbortRetryIgnore(
                                     delegate
                                     {
-                                        git.Tag(tagName, label.User, GetEmail(label.User),
+                                        string name, email;
+                                        GetUserInformation(label.User, out name, out email);
+                                        git.Tag(tagName, name, email,
                                             tagComment, label.DateTime);
                                     }))
                                 {
@@ -229,6 +233,88 @@ namespace Hpdi.Vss2Git
                 logger.WriteLine("Git commits: {0}", commitCount);
                 logger.WriteLine("Git tags: {0}", tagCount);
             });
+        }
+
+        private void GetUserInformation(string user, out string name, out string email)
+        {
+            name = string.Empty;
+            email = string.Empty;
+
+            if(usermapping == null)
+            {
+                usermapping = new Dictionary<string, AuthorInformation>();
+                if (!string.IsNullOrWhiteSpace(UserMappingFilePath))
+                {
+                    var data = LoadCsv(UserMappingFilePath);
+                    if (data.GetLength(1) == 3)
+                    {
+                        for (int i = 0; i < data.GetLength(0); i++)
+                        {
+                            usermapping.Add(data[i, 0], new AuthorInformation() { Name = data[i, 1], Email = data[i, 2] });
+                        }
+                    }
+                    else
+                    {
+                        UserFeedbackService.Current.Show("The user mapping file is in a wrong format!", "Cannot read user mapping file", FeedbackOptions.OK, FeedbackIcon.Error);
+                    }
+                }
+            }
+
+            if(usermapping.ContainsKey(user))
+            {
+                var author = usermapping[user];
+                name = author.Name;
+                email = author.Email;
+            }
+            else
+            {
+                name = user;
+                if (!string.IsNullOrWhiteSpace(UserMappingFilePath))
+                {
+                    UserFeedbackService.Current.Show($"Author could not be mapped by usermapping file. User: {user}", "Author could not be mapped", FeedbackOptions.OK, FeedbackIcon.Information);
+                }
+            }
+        }
+
+        // Load a CSV file into an array of rows and columns.
+        // Assume there may be blank lines but every line has
+        // the same number of fields.
+        private string[,] LoadCsv(string filename)
+        {
+            try {
+                // Get the file's text.
+                string whole_file = System.IO.File.ReadAllText(filename);
+
+                // Split into lines.
+                whole_file = whole_file.Replace('\n', '\r');
+                string[] lines = whole_file.Split(new char[] { '\r' },
+                    StringSplitOptions.RemoveEmptyEntries);
+
+                // See how many rows and columns there are.
+                int num_rows = lines.Length;
+                int num_cols = lines[0].Split(',').Length;
+
+                // Allocate the data array.
+                string[,] values = new string[num_rows, num_cols];
+
+                // Load the array.
+                for (int r = 0; r < num_rows; r++)
+                {
+                    string[] line_r = lines[r].Split(',');
+                    for (int c = 0; c < num_cols; c++)
+                    {
+                        values[r, c] = line_r[c];
+                    }
+                }
+
+                // Return the values.
+                return values;
+            }
+            catch(Exception ex)
+            {
+                UserFeedbackService.Current.Show($"Error reading user mapping file: {ex.Message}", "Error reading user mapping file", FeedbackOptions.OK, FeedbackIcon.Error);
+            }
+            return new string[0, 0];
         }
 
         private bool ReplayChangeset(VssPathMapper pathMapper, Changeset changeset,
@@ -566,8 +652,10 @@ namespace Hpdi.Vss2Git
             var result = false;
             AbortRetryIgnore(delegate
             {
+                string name, email;
+                GetUserInformation(changeset.User, out name, out email);
                 result = git.AddAll() &&
-                    git.Commit(changeset.User, GetEmail(changeset.User),
+                    git.Commit(name, email,
                     changeset.Comment ?? DefaultComment, changeset.DateTime);
             });
             return result;
@@ -618,11 +706,7 @@ namespace Hpdi.Vss2Git
             return false;
         }
 
-        private string GetEmail(string user)
-        {
-            // TODO: user-defined mapping of user names to email addresses
-            return user.ToLower().Replace(' ', '.') + "@" + emailDomain;
-        }
+        
 
         private string GetTagFromLabel(string label)
         {

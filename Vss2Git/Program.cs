@@ -20,7 +20,7 @@ namespace Vss2Git
         private static bool transcode = true;
         private static double combineAnyComment = 30d;
         private static double combineSameComment = 600d;
-        private static string emailDomain = string.Empty;
+        private static string usermappingfilepath = string.Empty;
         private static bool noUserInteraction = false;
 
 
@@ -49,7 +49,7 @@ namespace Vss2Git
             parser.Setup<bool>("transcode").Callback(p => transcode = p);
             parser.Setup<double>("combineAnyComment").Callback(p => combineAnyComment = p);
             parser.Setup<double>("combineSameComment").Callback(p => combineSameComment = p);
-            parser.Setup<string>("emailDomain").Callback(p => emailDomain = p).Required();
+            parser.Setup<string>("usermappingFilePath").Callback(p => usermappingfilepath = p).Required();
             parser.Setup<bool>("noUserInteraction").Callback(p => noUserInteraction = p);
 
             parser.Parse(args);
@@ -63,7 +63,7 @@ namespace Vss2Git
                     transcode,
                     combineAnyComment,
                     combineSameComment,
-                    emailDomain
+                    usermappingfilepath
                     );
             UserFeedbackService.Current.HandleUserFeedback += Current_HandleUserFeedback;
 
@@ -81,6 +81,7 @@ namespace Vss2Git
             Console.WriteLine($"Combine any comments within: {combineAnyComment}");
             Console.WriteLine($"Combine same comments within: {combineSameComment}");
             Console.WriteLine($"No user interaction: {noUserInteraction}");
+            Console.WriteLine($"Usermapping file path: {usermappingfilepath}");
             Console.WriteLine();
 
             var t1 = Task.Run(() =>
@@ -117,14 +118,18 @@ namespace Vss2Git
                 }
             });
             Task.WaitAll(new Task[] { t1, t2 });
-
+            Console.WriteLine();
+            Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("VSS to Git Mîgration finished:");
             ShowStatus(service);
             Console.ResetColor();
             Console.WriteLine();
-            Console.WriteLine("Press <ENTER> to quit...");
-            Console.ReadLine();
+            if (!noUserInteraction)
+            {
+                Console.WriteLine("Press <ENTER> to quit...");
+                Console.ReadLine();
+            }
         }
 
         private static void ShowStatus(Vss2GitService service)
@@ -175,6 +180,9 @@ namespace Vss2Git
             }
             else
             {
+                Console.WriteLine();
+                Console.WriteLine(args.Message);
+
                 switch (args.Options)
                 {
                     case FeedbackOptions.AbortRetryIgnore:

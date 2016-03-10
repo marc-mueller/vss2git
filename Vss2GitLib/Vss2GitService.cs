@@ -21,9 +21,9 @@ namespace Hpdi.Vss2Git
         private double combineAnyComment;
         private double combineSameComment;
         private string outputDirectory;
-        private string emailDomain;
+        private string usermappingfilepath;
 
-        public Vss2GitService(string vssDirectory, IEnumerable<string> vssProjects, string outputDirectory, string logfile, string excludes, Encoding encoding, bool transcode, double combineAnyComment, double combineSameComment, string emailDomain)
+        public Vss2GitService(string vssDirectory, IEnumerable<string> vssProjects, string outputDirectory, string logfile, string excludes, Encoding encoding, bool transcode, double combineAnyComment, double combineSameComment, string usermappingfile)
         {
             this.vssDirectory = vssDirectory;
             this.vssProjects = vssProjects;
@@ -34,7 +34,7 @@ namespace Hpdi.Vss2Git
             this.transcode = transcode;
             this.combineAnyComment = combineAnyComment;
             this.combineSameComment = combineSameComment;
-            this.emailDomain = emailDomain;
+            this.usermappingfilepath = usermappingfile;
         }
 
         public void StartMigration()
@@ -90,9 +90,9 @@ namespace Hpdi.Vss2Git
                 {
                     var gitExporter = new GitExporter(workQueue, logger,
                         revisionAnalyzer, changesetBuilder);
-                    if (!string.IsNullOrEmpty(emailDomain))
+                    if (!string.IsNullOrEmpty(usermappingfilepath))
                     {
-                        gitExporter.EmailDomain = emailDomain;
+                        gitExporter.UserMappingFilePath = usermappingfilepath;
                     }
                     if (!transcode)
                     {
